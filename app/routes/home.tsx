@@ -73,8 +73,28 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <span className="w-24 opacity-50">drwxr-xr-x</span>
                 <span className="w-16">staff</span>
                 <a
-                  href="/github"
+                  href="/login"
                   className="text-term-accent-light dark:text-term-accent-dark hover:underline flex items-center gap-2"
+                >
+                  <TerminalSquare className="w-4 h-4" /> admin-login
+                </a>
+              </div>
+              <div className="flex items-center group">
+                <span className="w-24 opacity-50">drwxr-xr-x</span>
+                <span className="w-16">staff</span>
+                <a
+                  href="/dashboard"
+                  className="text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-2"
+                >
+                  <Code2 className="w-4 h-4" /> dashboard
+                </a>
+              </div>
+              <div className="flex items-center group">
+                <span className="w-24 opacity-50">drwxr-xr-x</span>
+                <span className="w-16">staff</span>
+                <a
+                  href="/github"
+                  className="text-term-muted-light dark:text-term-muted-dark hover:underline flex items-center gap-2"
                 >
                   <Github className="w-4 h-4" /> .github
                 </a>

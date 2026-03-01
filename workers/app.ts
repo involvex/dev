@@ -59,7 +59,16 @@ app.post("/api/login", async (c) => {
   }
 
   // 2. Verify Credentials
-  if (username !== c.env.ADMIN_USERNAME || password !== c.env.ADMIN_PASSWORD) {
+  // First check D1
+  const user = await c.env.DB.prepare("SELECT * FROM users WHERE username = ?")
+    .bind(username)
+    .first<{ password: string }>();
+
+  const isValid = user
+    ? user.password === password
+    : username === c.env.ADMIN_USERNAME && password === c.env.ADMIN_PASSWORD;
+
+  if (!isValid) {
     return c.json({ error: "Invalid credentials" }, 401);
   }
 
@@ -117,7 +126,75 @@ app.get("/api/me", async (c) => {
     return c.json({ authenticated: false });
   }
 
-  return c.json({ authenticated: true, username: c.env.ADMIN_USERNAME });
+  // Get username from D1 or fallback
+  const user = await c.env.DB.prepare(
+    "SELECT username FROM users LIMIT 1",
+  ).first<{ username: string }>();
+  const username = user ? user.username : c.env.ADMIN_USERNAME;
+
+  return c.json({ authenticated: true, username });
+});
+
+// Middleware to protect certain routes
+const requireAuth = async (c: Context<AppEnv>, next: Next) => {
+  const sessionId = getCookie(c, "session_id");
+  if (!sessionId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const session = await c.env.DB.prepare(
+    "SELECT * FROM sessions WHERE id = ? AND expires_at > ?",
+  )
+    .bind(sessionId, Math.floor(Date.now() / 1000))
+    .first();
+
+  if (!session) {
+    deleteCookie(c, "session_id", { path: "/" });
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  await next();
+};
+
+// -----------------------------------------------------------------------------
+// Profile API
+// -----------------------------------------------------------------------------
+
+app.post("/api/update-profile", requireAuth, async (c) => {
+  const body = (await c.req.json()) as {
+    newUsername?: string;
+    newPassword?: string;
+  };
+  const { newUsername, newPassword } = body;
+
+  if (!newUsername || !newPassword) {
+    return c.json({ error: "Username and password are required" }, 400);
+  }
+
+  // Upsert user (assuming one admin for now)
+  const existingUser = await c.env.DB.prepare(
+    "SELECT username FROM users LIMIT 1",
+  ).first();
+
+  if (existingUser) {
+    await c.env.DB.prepare(
+      "UPDATE users SET username = ?, password = ? WHERE username = ?",
+    )
+      .bind(
+        newUsername,
+        newPassword,
+        (existingUser as { username: string }).username,
+      )
+      .run();
+  } else {
+    await c.env.DB.prepare(
+      "INSERT INTO users (username, password) VALUES (?, ?)",
+    )
+      .bind(newUsername, newPassword)
+      .run();
+  }
+
+  return c.json({ success: true });
 });
 
 // -----------------------------------------------------------------------------
@@ -186,26 +263,9 @@ app.get("/oauth/callback", async (c) => {
   return c.redirect("/dashboard");
 });
 
-// Middleware to protect certain routes
-const requireAuth = async (c: Context<AppEnv>, next: Next) => {
-  const sessionId = getCookie(c, "session_id");
-  if (!sessionId) {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  const session = await c.env.DB.prepare(
-    "SELECT * FROM sessions WHERE id = ? AND expires_at > ?",
-  )
-    .bind(sessionId, Math.floor(Date.now() / 1000))
-    .first();
-
-  if (!session) {
-    deleteCookie(c, "session_id", { path: "/" });
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  await next();
-};
+// -----------------------------------------------------------------------------
+// Image Generation API
+// -----------------------------------------------------------------------------
 
 app.post("/api/generate-image", requireAuth, async (c) => {
   const body = (await c.req.json()) as { prompt?: string };
