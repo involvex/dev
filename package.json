@@ -16,6 +16,7 @@
     "publish": true
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.4.2",
     "clsx": "^2.1.1",
     "hono": "^4.12.3",
     "isbot": "^5.1.35",
@@ -51,6 +52,7 @@
     "prebuild": "bun run format && bun run lint:fix && bun run typecheck",
     "build": "react-router build",
     "cf-typegen": "wrangler types",
+    "cf-typegen:image-worker": "wrangler types --config image-worker.wrangler.json",
     "deploy": "bun run build && wrangler deploy",
     "dev": "react-router dev",
     "format": "prettier . --write",
@@ -58,7 +60,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "bun run build && vite preview",
-    "typecheck": "npm run cf-typegen && react-router typegen && tsc -b"
+    "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
+    "image-worker:deploy": "bun run cf-typegen:image-worker && wrangler deploy --config image-worker.wrangler.json"
   },
   "repository": {
     "url": "https://github.com/involvex/dev.git",

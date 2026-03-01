@@ -1,0 +1,13 @@
+{
+  "compatibility_date": "2025-10-08",
+  "main": "workers/image-generator.ts",
+  "account_id": "d4e0f1c1c830642168db2f4ea3aece58",
+  "name": "image-generator",
+  "upload_source_maps": true,
+  "ai": {
+    "binding": "AI"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
