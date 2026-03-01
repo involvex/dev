@@ -293,6 +293,64 @@ app.post("/api/generate-image", requireAuth, async (c) => {
   }
 });
 
+interface RoleMessage {
+  role: string;
+  content: string;
+}
+
+app.post("/api/ai/chat", requireAuth, async (c) => {
+  const body = (await c.req.json()) as { messages?: RoleMessage[] };
+  if (!body.messages) return c.json({ error: "Messages are required" }, 400);
+
+  try {
+    const response = await c.env.AI.run("@cf/meta/llama-3-8b-instruct", {
+      messages: body.messages,
+    });
+    return c.json(response);
+  } catch (err) {
+    return c.json(
+      { error: err instanceof Error ? err.message : "AI Error" },
+      500,
+    );
+  }
+});
+
+app.post("/api/ai/translate", requireAuth, async (c) => {
+  const body = (await c.req.json()) as { text?: string; target_lang?: string };
+  if (!body.text || !body.target_lang)
+    return c.json({ error: "Text and target language are required" }, 400);
+
+  try {
+    const response = await c.env.AI.run("@cf/meta/m2m100-1.2b", {
+      text: body.text,
+      target_lang: body.target_lang,
+    });
+    return c.json(response);
+  } catch (err) {
+    return c.json(
+      { error: err instanceof Error ? err.message : "AI Error" },
+      500,
+    );
+  }
+});
+
+app.post("/api/ai/summarize", requireAuth, async (c) => {
+  const body = (await c.req.json()) as { text?: string };
+  if (!body.text) return c.json({ error: "Text is required" }, 400);
+
+  try {
+    const response = await c.env.AI.run("@cf/facebook/bart-large-cnn", {
+      input_text: body.text,
+    });
+    return c.json(response);
+  } catch (err) {
+    return c.json(
+      { error: err instanceof Error ? err.message : "AI Error" },
+      500,
+    );
+  }
+});
+
 // SSR react-router
 app.get("*", (c) => {
   const requestHandler = createRequestHandler(
