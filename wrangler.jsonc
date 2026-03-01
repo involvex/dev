@@ -15,6 +15,28 @@
   "observability": {
     "enabled": true,
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "involvex-production",
+      "database_id": "47718e0a-3505-4a4a-90de-2023e20a6536",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "6a7efcfa7a9045b298b1d7fb1d26f9d8",
+    },
+  ],
+  "ai": {
+    "binding": "AI",
+  },
+  "services": [
+    {
+      "binding": "Image-gen",
+      "service": "image-gen",
+    },
+  ],
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
