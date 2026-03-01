@@ -8,6 +8,7 @@
   "compatibility_date": "2025-10-08",
   "main": "./workers/app.ts",
   "account_id": "d4e0f1c1c830642168db2f4ea3aece58",
+  "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "VALUE_FROM_CLOUDFLARE": "InvolveX's Dev Worker - dev.involvex.workers.dev",
   },
