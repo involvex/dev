@@ -7,42 +7,71 @@
       "Workers"
     ],
     "categories": [
-      "starter"
+      "homepage"
     ],
+    "homepage": "https://dev.involvex.workers.dev",
     "docs_url": "https://developers.cloudflare.com/workers",
     "preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/d3db20ee-c3bf-4b5c-f1ed-d86021359e00/public",
     "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/56caa8a9-d3ab-4ac6-32a9-6a5fc686e000/preview",
     "publish": true
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "hono": "4.11.1",
     "isbot": "5.1.32",
+    "lucide-react": "^0.575.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "react-router": "7.9.6"
+    "react-router": "7.9.6",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.15.3",
-    "@cloudflare/workers-types": "^4.20250425.0",
+    "@eslint/js": "^9.14.0",
     "@react-router/dev": "7.9.6",
     "@tailwindcss/vite": "4.1.17",
     "@types/node": "24.10.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
     "tailwindcss": "4.1.17",
     "typescript": "5.9.3",
+    "typescript-eslint": "^8.56.1",
     "vite": "^6.0.0",
     "vite-tsconfig-paths": "5.1.4",
     "wrangler": "4.56.0"
   },
   "private": true,
   "scripts": {
+    "prebuild": "bun run format && bun run lint:fix && bun run typecheck",
     "build": "react-router build",
     "cf-typegen": "wrangler types",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "bun run build && wrangler deploy",
     "dev": "react-router dev",
-    "preview": "npm run build && vite preview",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "preview": "bun run build && vite preview",
     "typecheck": "npm run cf-typegen && react-router typegen && tsc -b"
+  },
+  "repository": {
+    "url": "https://github.com/involvex/dev.git",
+    "type": "git"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/involvex"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/involvex"
+  },
+  "author": {
+    "name": "involvex"
   },
   "type": "module"
 }

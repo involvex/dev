@@ -1,16 +1,36 @@
-@import "tailwindcss" source(".");
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans:
-    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --color-term-bg-dark: #000000;
+  --color-term-fg-dark: #ffffff;
+  --color-term-muted-dark: #888888;
+  --color-term-accent-dark: #00ff00;
+  --color-term-bar-dark: #111111;
+  --color-term-border-dark: #333333;
+
+  --color-term-bg-light: #ffffff;
+  --color-term-fg-light: #000000;
+  --color-term-muted-light: #666666;
+  --color-term-accent-light: #008800;
+  --color-term-bar-light: #dddddd;
+  --color-term-border-light: #cccccc;
 }
 
-html,
-body {
-  @apply bg-white dark:bg-gray-950;
-
-  @media (prefers-color-scheme: dark) {
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  :root.dark {
     color-scheme: dark;
+  }
+
+  body {
+    @apply bg-term-bg-light text-term-fg-light font-mono antialiased min-h-screen selection:bg-term-accent-light selection:text-white flex flex-col;
+  }
+
+  :root.dark body {
+    @apply bg-term-bg-dark text-term-fg-dark selection:bg-term-accent-dark selection:text-black;
   }
 }
