@@ -202,3 +202,4 @@ dist
 .react-router/
 /build/
 lint-error.txt
+build-error.txt
