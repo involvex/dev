@@ -81,7 +81,7 @@ Notes for Claude Code
 - Always check .claude/ and .github/copilot-instructions.md before changing Worker entrypoints, bindings (wrangler.jsonc / wrangler.toml), or types — they contain embedded guidance for Cloudflare bindings, D1 schema, and AI usage.
 - Scripts often use `bun run ...`. Prefer Bun in CLAUDE.md and when running scripts locally, but fall back to `npm run <script>` if Bun is not installed.
 - When editing Cloudflare-related files, pay attention to bindings: KV, D1, AI, and schema.sql. Running `npm run cf-typegen` is recommended after changing bindings.
-- This file is intentionally concise — consult README.md and .claude/* for deeper operational details.
+- This file is intentionally concise — consult README.md and .claude/\* for deeper operational details.
 
 Verification
 

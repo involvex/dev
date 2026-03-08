@@ -15,9 +15,6 @@
     "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/56caa8a9-d3ab-4ac6-32a9-6a5fc686e000/preview",
     "publish": true
   },
-  "workspaces": [
-    "url-shortener"
-  ],
   "dependencies": {
     "@marsidev/react-turnstile": "^1.4.2",
     "clsx": "^2.1.1",

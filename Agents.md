@@ -106,11 +106,11 @@ wrangler deploy
 
 ### Platform Bindings
 
-| Binding | Purpose |
-|---------|---------|
-| `DB` | D1 database (sessions, users) |
-| `KV` | Key-value storage (for url-shortener subproject) |
-| `AI` | Cloudflare Workers AI (image generation, chat, translation) |
+| Binding | Purpose                                                     |
+| ------- | ----------------------------------------------------------- |
+| `DB`    | D1 database (sessions, users)                               |
+| `KV`    | Key-value storage (for url-shortener subproject)            |
+| `AI`    | Cloudflare Workers AI (image generation, chat, translation) |
 
 ### AI Models Used
 
@@ -197,6 +197,7 @@ npm run typecheck
 ### Scripts Usage
 
 Many scripts use `bun run ...`. Either:
+
 - Have Bun installed and use `bun run <script>`
 - Run the underlying npm command directly: `npm run <script>`
 
@@ -260,6 +261,7 @@ Before considering work complete:
 ---
 
 For more details, see:
+
 - `README.md` — project overview
 - `CLAUDE.md` — Claude Code specific guidance
 - `GEMINI.md` — Gemini specific guidance
