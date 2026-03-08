@@ -105,7 +105,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <a
                   href="https://github.com/involvex"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener"
                   className="text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-2"
                 >
                   <Code2 className="w-4 h-4" /> repositories
@@ -117,7 +117,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <a
                   href="https://github.com/sponsors/involvex"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener"
+                  title="Sponsor Involvex"
                   className="text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-2"
                 >
                   <HandHeart className="w-4 h-4" /> funding.yml

@@ -15,12 +15,17 @@
     "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/56caa8a9-d3ab-4ac6-32a9-6a5fc686e000/preview",
     "publish": true
   },
+  "workspaces": [
+    "url-shortener"
+  ],
   "dependencies": {
     "@marsidev/react-turnstile": "^1.4.2",
     "clsx": "^2.1.1",
+    "cross-env": "^10.1.0",
     "hono": "^4.12.3",
     "isbot": "^5.1.35",
     "lucide-react": "^0.575.0",
+    "nanoid": "^5.1.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-router": "7.13.1",
@@ -40,12 +45,15 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
     "prettier": "^3.8.1",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-packagejson": "^3.0.2",
+    "prettier-plugin-sort-imports": "^1.8.11",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "7.3.1",
     "vite-tsconfig-paths": "6.1.1",
-    "wrangler": "4.69.0"
+    "wrangler": "4.71.0"
   },
   "private": true,
   "scripts": {
@@ -54,17 +62,17 @@
     "cf-typegen": "wrangler types",
     "cf-typegen:image-worker": "wrangler types --config image-worker.wrangler.json",
     "deploy": "bun run build && wrangler deploy",
-    "dev": "react-router dev",
+    "dev": "cross-env NODE_ENV=development DEV=true bun run react-router dev",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . . --ignore-pattern url-shortener/scripts/ --ignore-pattern url-shortener/node_modules/ --ignore-pattern url-shortener/.wrangler/",
+    "lint:fix": "eslint . --fix . --ignore-pattern url-shortener/scripts/ --ignore-pattern url-shortener/node_modules/ --ignore-pattern url-shortener/.wrangler/",
     "preview": "bun run build && vite preview",
     "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
     "image-worker:deploy": "bun run cf-typegen:image-worker && wrangler deploy --config image-worker.wrangler.json"
   },
   "repository": {
-    "url": "https://github.com/involvex/dev.git",
+    "url": "git+https://github.com/involvex/dev.git",
     "type": "git"
   },
   "sponsor": {
@@ -76,5 +84,6 @@
   "author": {
     "name": "involvex"
   },
-  "type": "module"
+  "type": "module",
+  "version": ""
 }

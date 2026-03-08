@@ -11,20 +11,48 @@ export function meta() {
   ];
 }
 
+// Helper for type-safe environment detection
+const getIsDev = () => {
+  const global = globalThis as unknown as {
+    process?: { env?: { NODE_ENV?: string } };
+  };
+  return (
+    import.meta.env.DEV ||
+    import.meta.env.MODE === "development" ||
+    global.process?.env?.NODE_ENV === "development"
+  );
+};
+
 export function loader({ context }: Route.LoaderArgs) {
   const env = context.cloudflare.env as Cloudflare.Env & {
     TURNSTILE_SITE_KEY?: string;
   };
+  const isDev = getIsDev();
+
   return {
     siteKey: env.TURNSTILE_SITE_KEY || "",
+    isDev,
   };
 }
 
 export default function Login({ loaderData }: Route.ComponentProps) {
+  const isDev = loaderData.isDev || getIsDev();
+
+  console.log(
+    "Login component mode:",
+    import.meta.env.MODE,
+    "isDev:",
+    isDev,
+    "loaderIsDev:",
+    loaderData.isDev,
+  );
+
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState(
+    isDev ? "dev-token" : "",
+  );
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -120,12 +148,18 @@ export default function Login({ loaderData }: Route.ComponentProps) {
               </div>
 
               <div className="flex justify-center pt-2">
-                <Turnstile
-                  siteKey={loaderData.siteKey}
-                  onSuccess={(token) => setTurnstileToken(token)}
-                  onError={() => setError("Turnstile error occurred")}
-                  options={{ theme: "auto" }}
-                />
+                {!isDev ? (
+                  <Turnstile
+                    siteKey={loaderData.siteKey}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onError={() => setError("Turnstile error occurred")}
+                    options={{ theme: "auto" }}
+                  />
+                ) : (
+                  <div className="text-xs text-term-muted-light bg-black/5 dark:bg-white/5 px-3 py-1 rounded-full border border-term-border-light">
+                    Turnstile disabled in DEV mode
+                  </div>
+                )}
               </div>
             </div>
 

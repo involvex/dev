@@ -1,6 +1,7 @@
 import { Hono, type Context, type Next } from "hono";
 import { createRequestHandler } from "react-router";
 import { setCookie, getCookie, deleteCookie } from "hono/cookie";
+import { nanoid } from "nanoid";
 
 type AppEnv = {
   Bindings: Cloudflare.Env & {
@@ -14,6 +15,18 @@ type AppEnv = {
 };
 
 const app = new Hono<AppEnv>();
+
+// Helper for type-safe environment detection
+const getIsDev = () => {
+  const global = globalThis as unknown as {
+    process?: { env?: { NODE_ENV?: string } };
+  };
+  return (
+    import.meta.env.DEV ||
+    import.meta.env.MODE === "development" ||
+    global.process?.env?.NODE_ENV === "development"
+  );
+};
 
 // Turnstile verification middleware/helper
 async function verifyTurnstile(token: string, secret: string) {
@@ -50,22 +63,27 @@ app.post("/api/login", async (c) => {
   }
 
   // 1. Verify Turnstile
-  const isValidTurnstile = await verifyTurnstile(
-    turnstileToken,
-    c.env.TURNSTILE_SECRET_KEY,
-  );
-  if (!isValidTurnstile) {
-    return c.json({ error: "Turnstile verification failed" }, 400);
+  if (!getIsDev()) {
+    const isValidTurnstile = await verifyTurnstile(
+      turnstileToken,
+      c.env.TURNSTILE_SECRET_KEY,
+    );
+    if (!isValidTurnstile) {
+      return c.json({ error: "Turnstile verification failed" }, 400);
+    }
+  } else {
+    console.log("Skipping Turnstile verification in DEV mode");
   }
 
   // 2. Verify Credentials
   // First check D1
   const user = await c.env.DB.prepare("SELECT * FROM users WHERE username = ?")
     .bind(username)
-    .first<{ password: string }>();
+    .first<{ password_hash: string }>();
 
+  // Fallback to admin credentials if user doesn't exist in DB
   const isValid = user
-    ? user.password === password
+    ? user.password_hash === password
     : username === c.env.ADMIN_USERNAME && password === c.env.ADMIN_PASSWORD;
 
   if (!isValid) {
@@ -77,8 +95,10 @@ app.post("/api/login", async (c) => {
   // 24 hours expiry
   const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
 
-  await c.env.DB.prepare("INSERT INTO sessions (id, expires_at) VALUES (?, ?)")
-    .bind(sessionId, expiresAt)
+  await c.env.DB.prepare(
+    "INSERT INTO sessions (id, username, expires_at) VALUES (?, ?, ?)",
+  )
+    .bind(sessionId, username, expiresAt)
     .run();
 
   // 4. Set Cookie
@@ -118,7 +138,7 @@ app.get("/api/me", async (c) => {
     "SELECT * FROM sessions WHERE id = ? AND expires_at > ?",
   )
     .bind(sessionId, Math.floor(Date.now() / 1000))
-    .first();
+    .first<{ username: string }>();
 
   if (!session) {
     // Session doesn't exist or expired
@@ -126,13 +146,7 @@ app.get("/api/me", async (c) => {
     return c.json({ authenticated: false });
   }
 
-  // Get username from D1 or fallback
-  const user = await c.env.DB.prepare(
-    "SELECT username FROM users LIMIT 1",
-  ).first<{ username: string }>();
-  const username = user ? user.username : c.env.ADMIN_USERNAME;
-
-  return c.json({ authenticated: true, username });
+  return c.json({ authenticated: true, username: session.username });
 });
 
 // Middleware to protect certain routes
@@ -178,7 +192,7 @@ app.post("/api/update-profile", requireAuth, async (c) => {
 
   if (existingUser) {
     await c.env.DB.prepare(
-      "UPDATE users SET username = ?, password = ? WHERE username = ?",
+      "UPDATE users SET username = ?, password_hash = ? WHERE username = ?",
     )
       .bind(
         newUsername,
@@ -188,7 +202,7 @@ app.post("/api/update-profile", requireAuth, async (c) => {
       .run();
   } else {
     await c.env.DB.prepare(
-      "INSERT INTO users (username, password) VALUES (?, ?)",
+      "INSERT INTO users (username, password_hash) VALUES (?, ?)",
     )
       .bind(newUsername, newPassword)
       .run();
@@ -247,8 +261,10 @@ app.get("/oauth/callback", async (c) => {
   const sessionId = crypto.randomUUID();
   const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60 * 24;
 
-  await c.env.DB.prepare("INSERT INTO sessions (id, expires_at) VALUES (?, ?)")
-    .bind(sessionId, expiresAt)
+  await c.env.DB.prepare(
+    "INSERT INTO sessions (id, username, expires_at) VALUES (?, ?, ?)",
+  )
+    .bind(sessionId, userData.login, expiresAt)
     .run();
 
   // 4. Set Cookie & Redirect
@@ -351,9 +367,91 @@ app.post("/api/ai/summarize", requireAuth, async (c) => {
   }
 });
 
-// SSR react-router
+// -----------------------------------------------------------------------------
+// URL Shortener API
+// -----------------------------------------------------------------------------
+
+app.post("/api/shorten", requireAuth, async (c) => {
+  const body = (await c.req.json()) as { longUrl?: string };
+  if (!body.longUrl) {
+    return c.json({ error: "Long URL is required" }, 400);
+  }
+
+  // Get current user from session
+  const sessionId = getCookie(c, "session_id");
+  const session = await c.env.DB.prepare(
+    "SELECT username FROM sessions WHERE id = ?",
+  )
+    .bind(sessionId)
+    .first<{ username: string }>();
+
+  if (!session) return c.json({ error: "Unauthorized" }, 401);
+
+  const shortCode = nanoid(8);
+  const id = crypto.randomUUID();
+
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO short_urls (id, long_url, short_code, user_id) VALUES (?, ?, ?, ?)",
+    )
+      .bind(id, body.longUrl, shortCode, session.username)
+      .run();
+
+    const shortUrl = `https://dev.involvex.workers.dev/url=${shortCode}`;
+    return c.json({ shortUrl, shortCode, originalUrl: body.longUrl });
+  } catch {
+    return c.json({ error: "Failed to create short URL" }, 500);
+  }
+});
+
+app.get("/api/history", requireAuth, async (c) => {
+  // Get current user
+  const sessionId = getCookie(c, "session_id");
+  const session = await c.env.DB.prepare(
+    "SELECT username FROM sessions WHERE id = ?",
+  )
+    .bind(sessionId)
+    .first<{ username: string }>();
+
+  if (!session) return c.json({ error: "Unauthorized" }, 401);
+
+  const history = await c.env.DB.prepare(
+    "SELECT * FROM short_urls WHERE user_id = ? ORDER BY created_at DESC",
+  )
+    .bind(session.username)
+    .all();
+
+  return c.json({ history: history.results });
+});
+
+// Public Redirect Route
+// Catch any request and check if it matches the /url= pattern manually
+// This is the most reliable way to avoid conflicts with Hono's route parsing
+app.get("*", async (c, next) => {
+  const path = c.req.path;
+  if (path.startsWith("/url=")) {
+    const code = path.substring(5); // Remove "/url="
+    console.log("Redirecting code from wildcard:", code);
+
+    const entry = await c.env.DB.prepare(
+      "SELECT long_url FROM short_urls WHERE short_code = ?",
+    )
+      .bind(code)
+      .first<{ long_url: string }>();
+
+    if (entry) {
+      return c.redirect(entry.long_url);
+    }
+    return c.text("Short URL not found", 404);
+  }
+  return next();
+});
+
+// SSR react-router - catch everything else
 app.get("*", (c) => {
   const requestHandler = createRequestHandler(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - virtual module
     () => import("virtual:react-router/server-build"),
     import.meta.env.MODE,
   );

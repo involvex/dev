@@ -14,6 +14,7 @@ export default tseslint.config(
       "node_modules",
       ".wrangler",
       "worker-configuration.d.ts",
+      "url-shortener/scripts",
     ],
   },
   {

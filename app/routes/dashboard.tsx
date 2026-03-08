@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
 import {
   LogOut,
@@ -14,6 +14,8 @@ import {
   ExternalLink,
   TrendingUp,
   Compass,
+  Link as LinkIcon,
+  Copy,
 } from "lucide-react";
 import type { Route } from "./+types/dashboard";
 import { redirect } from "react-router";
@@ -61,7 +63,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
-    "generator" | "ai-tools" | "github" | "profile"
+    "generator" | "ai-tools" | "github" | "profile" | "shortener"
   >("generator");
 
   // Generator State
@@ -85,6 +87,22 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const [summarizeResult, setSummarizeResult] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
+
+  // URL Shortener State
+  interface ShortUrlHistory {
+    id: string;
+    long_url: string;
+    short_code: string;
+    created_at: number;
+  }
+
+  const [longUrl, setLongUrl] = useState("");
+  const [shortUrlResult, setShortUrlResult] = useState("");
+  const [shortenerError, setShortenerError] = useState("");
+  const [isShortening, setIsShortening] = useState(false);
+  const [shortenerHistory, setShortenerHistory] = useState<ShortUrlHistory[]>(
+    [],
+  );
 
   // Profile State
   const [newUsername, setNewUsername] = useState(loaderData.username);
@@ -205,6 +223,52 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     }
   };
 
+  const handleShorten = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!longUrl.trim()) return;
+    setIsShortening(true);
+    setShortenerError("");
+    setShortUrlResult("");
+
+    try {
+      const res = await fetch("/api/shorten", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ longUrl }),
+      });
+      const data = (await res.json()) as {
+        shortUrl?: string;
+        error?: string;
+      };
+      if (data.error) throw new Error(data.error);
+      setShortUrlResult(data.shortUrl || "");
+      fetchHistory(); // Refresh history
+      setLongUrl("");
+    } catch (err) {
+      setShortenerError(
+        err instanceof Error ? err.message : "Failed to shorten URL",
+      );
+    } finally {
+      setIsShortening(false);
+    }
+  };
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const res = await fetch("/api/history");
+      const data = (await res.json()) as { history: ShortUrlHistory[] };
+      setShortenerHistory(data.history || []);
+    } catch (err) {
+      console.error("Failed to fetch history", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "shortener") {
+      fetchHistory();
+    }
+  }, [activeTab, fetchHistory]);
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUpdatingProfile(true);
@@ -283,6 +347,17 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
         >
           <MessageSquare className="w-4 h-4" />
           AI Tools
+        </button>
+        <button
+          onClick={() => setActiveTab("shortener")}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+            activeTab === "shortener"
+              ? "bg-term-bg-light dark:bg-term-bg-dark text-term-accent-light dark:text-term-accent-dark shadow-sm"
+              : "text-term-muted-light dark:text-term-muted-dark hover:text-term-fg-light dark:hover:text-term-fg-dark"
+          }`}
+        >
+          <LinkIcon className="w-4 h-4" />
+          URL Shortener
         </button>
         <button
           onClick={() => setActiveTab("github")}
@@ -445,6 +520,44 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               )}
               {aiError && <div className="text-red-500 text-xs">{aiError}</div>}
             </div>
+          )}
+
+          {activeTab === "shortener" && (
+            <>
+              <h2 className="text-lg font-bold mb-4 text-term-fg-light dark:text-term-fg-dark flex items-center gap-2">
+                <LinkIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                URL Shortener
+              </h2>
+              <form onSubmit={handleShorten} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="longUrl"
+                    className="block text-sm font-medium text-term-muted-light dark:text-term-muted-dark mb-2"
+                  >
+                    Long URL
+                  </label>
+                  <input
+                    id="longUrl"
+                    type="url"
+                    required
+                    value={longUrl}
+                    onChange={(e) => setLongUrl(e.target.value)}
+                    placeholder="https://example.com/very-long-url..."
+                    className="w-full p-3 bg-black/5 dark:bg-white/5 border border-term-border-light dark:border-term-border-dark rounded-lg text-term-fg-light dark:text-term-fg-dark placeholder:text-term-muted-light dark:placeholder:text-term-muted-dark focus:outline-none focus:ring-2 focus:ring-term-accent-light dark:focus:ring-term-accent-dark transition-all duration-200"
+                  />
+                </div>
+                {shortenerError && (
+                  <div className="text-red-500 text-sm">{shortenerError}</div>
+                )}
+                <button
+                  type="submit"
+                  disabled={isShortening || !longUrl.trim()}
+                  className="w-full flex items-center justify-center py-2.5 px-4 rounded-lg bg-purple-600 dark:bg-purple-500 text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-600/20 gap-2"
+                >
+                  {isShortening ? "Shortening..." : "Shorten URL"}
+                </button>
+              </form>
+            </>
           )}
 
           {activeTab === "github" && (
@@ -679,6 +792,78 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === "shortener" && (
+            <div className="h-full flex flex-col border border-term-border-light dark:border-term-border-dark rounded-xl bg-term-bg-light/30 dark:bg-term-bg-dark/30 p-6 overflow-hidden">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                <LinkIcon className="w-5 h-5" /> Your Shortened URLs
+              </h3>
+
+              {shortUrlResult && (
+                <div className="mb-6 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-between">
+                  <div className="truncate mr-4">
+                    <p className="text-xs text-purple-600 dark:text-purple-400 font-bold uppercase mb-1">
+                      Success! Here's your link:
+                    </p>
+                    <a
+                      href={shortUrlResult}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-lg font-mono font-medium truncate hover:underline"
+                    >
+                      {shortUrlResult}
+                    </a>
+                  </div>
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(shortUrlResult)
+                    }
+                    className="p-2 hover:bg-purple-500/10 rounded-lg text-purple-600 dark:text-purple-400 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-purple-500/20">
+                {shortenerHistory.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center opacity-30">
+                    <LinkIcon className="w-12 h-12 mb-2" />
+                    <p>No shortened URLs yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {shortenerHistory.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-4 rounded-lg bg-black/5 dark:bg-white/5 border border-term-border-light dark:border-term-border-dark hover:border-purple-500/30 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <a
+                            href={`/url=${item.short_code}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-purple-600 dark:text-purple-400 font-bold hover:underline"
+                          >
+                            dev.involvex.workers.dev/url={item.short_code}
+                          </a>
+                          <span className="text-xs text-term-muted-light dark:text-term-muted-dark">
+                            {new Date(
+                              item.created_at * 1000,
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-sm text-term-muted-light dark:text-term-muted-dark truncate">
+                          {item.long_url}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

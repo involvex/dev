@@ -203,3 +203,9 @@ dist
 /build/
 lint-error.txt
 build-error.txt
+
+url-shortener/node_modules
+url-shortener/.env
+url-shortener/.env.local
+url-shortener/.dev.vars
+url-shortener/.dev.vars.local
