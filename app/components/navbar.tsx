@@ -7,7 +7,7 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-term-border-light dark:border-term-border-dark bg-term-bar-light/95 dark:bg-term-bar-dark/95 backdrop-blur supports-[backdrop-filter]:bg-term-bar-light/60 dark:supports-[backdrop-filter]:bg-term-bar-dark/60">
+    <nav className="sticky top-0 z-50 w-full border-b border-term-border-light dark:border-term-border-dark bg-term-bar-light/95 dark:bg-term-bar-dark/95 backdrop-blur supports-backdrop-filter:bg-term-bar-light/60 dark:supports-backdrop-filter:bg-term-bar-dark/60">
       <div className="container flex h-14 max-w-screen-2xl items-center mx-auto px-4 sm:px-8">
         <div className="mr-4 flex">
           <Link to="/" className="mr-6 flex items-center space-x-2">

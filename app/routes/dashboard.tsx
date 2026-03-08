@@ -483,6 +483,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                   />
                   <select
                     value={targetLang}
+                    title="Lang"
                     onChange={(e) => setTargetLang(e.target.value)}
                     className="w-full p-2 bg-black/5 dark:bg-white/5 border border-term-border-light dark:border-term-border-dark rounded-lg text-term-fg-light dark:text-term-fg-dark"
                   >
@@ -870,7 +871,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           {activeTab === "github" && (
             <div className="h-full flex flex-col space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-                <div className="border border-term-border-light dark:border-term-border-dark rounded-xl bg-gradient-to-br from-blue-500/5 to-transparent p-6 flex flex-col">
+                <div className="border border-term-border-light dark:border-term-border-dark rounded-xl bg-linear-to-br from-blue-500/5 to-transparent p-6 flex flex-col">
                   <Compass className="w-8 h-8 text-blue-500 mb-4" />
                   <h3 className="text-xl font-bold mb-2">Discovery</h3>
                   <p className="text-sm text-term-muted-light flex-1">
@@ -880,13 +881,14 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                   <a
                     href="https://github.com/explore"
                     target="_blank"
+                    rel="noopener"
                     className="mt-4 inline-flex items-center gap-2 text-blue-500 text-sm font-bold hover:underline"
                   >
                     Go to Explore <ExternalLink className="w-3 h-3" />
                   </a>
                 </div>
 
-                <div className="border border-term-border-light dark:border-term-border-dark rounded-xl bg-gradient-to-br from-green-500/5 to-transparent p-6 flex flex-col">
+                <div className="border border-term-border-light dark:border-term-border-dark rounded-xl bg-linear-to-br from-green-500/5 to-transparent p-6 flex flex-col">
                   <TrendingUp className="w-8 h-8 text-green-500 mb-4" />
                   <h3 className="text-xl font-bold mb-2">Trends</h3>
                   <p className="text-sm text-term-muted-light flex-1">
@@ -896,6 +898,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
                   <a
                     href="https://github.com/trending"
                     target="_blank"
+                    rel="noopener"
                     className="mt-4 inline-flex items-center gap-2 text-green-500 text-sm font-bold hover:underline"
                   >
                     View Trending <ExternalLink className="w-3 h-3" />

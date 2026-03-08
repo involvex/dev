@@ -93,7 +93,7 @@ export default function Login({ loaderData }: Route.ComponentProps) {
     <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 min-h-screen">
       <div className="w-full max-w-md relative">
         {/* Glow effect */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-pink-500/20 blur-xl rounded-2xl opacity-50 dark:opacity-30"></div>
+        <div className="absolute -inset-1 bg-linear-to-r from-cyan-500/20 to-pink-500/20 blur-xl rounded-2xl opacity-50 dark:opacity-30"></div>
 
         <div className="relative border border-term-border-light dark:border-term-border-dark rounded-xl overflow-hidden bg-term-bg-light dark:bg-term-bg-dark shadow-2xl p-8">
           <div className="text-center mb-8">
@@ -111,7 +111,7 @@ export default function Login({ loaderData }: Route.ComponentProps) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm animate-pulse-fade">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
